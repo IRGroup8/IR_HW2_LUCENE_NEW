@@ -17,7 +17,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 
-
+//ye coommente alaki
 public class IndexFiles {
     private IndexFiles() {}
     public static void main(String[] args) {
