@@ -4,8 +4,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Date;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -16,18 +14,18 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.FSDirectory;
 public class SearchFiles {
 
-    private SearchFiles() { }
+    private SearchFiles() {}
     public static void main(String[] args) throws Exception {
         String index = "index";
         String field = "contents";
         String queries = null;
-        int repeat = 0;
         boolean raw = true;
         String queryString = null;
-        int hitsPerPage = 200;
+        int hitsPerPage = 10;
         IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(index)));
         IndexSearcher searcher = new IndexSearcher(reader);
         Analyzer analyzer = new StandardAnalyzer();
@@ -62,30 +60,15 @@ public class SearchFiles {
             if (queryString != null) {
                 break;
             }
-
         }
         reader.close();
-
     }
-
-    /**
-     * 139   * This demonstrates a typical paging search scenario, where the search engine presents
-     * 140   * pages of size n to the user. The user can then go to the next page if interested in
-     * 141   * the next hits.
-     * 142   *
-     * 143   * When the query is executed for the first time, then only enough results are collected
-     * 144   * to fill 5 result pages. If the user wants to page beyond this limit, then the query
-     * 145   * is executed another time and all hits are collected.
-     * 146   *
-     * 147
-     */
-
     public static void doPagingSearch(BufferedReader in, IndexSearcher searcher, Query query,
                                       int hitsPerPage, boolean raw, boolean interactive) throws IOException {
 
-        // Collect enough docs to show 5 pages
-        TopDocs results = searcher.search(query, 5 * hitsPerPage);
+        TopDocs results = searcher.search(query, 20 * hitsPerPage);
         ScoreDoc[] hits = results.scoreDocs;
+
 
         int numTotalHits = Math.toIntExact(results.totalHits.value);
         System.out.println(numTotalHits + " total matching documents");
@@ -94,21 +77,15 @@ public class SearchFiles {
         int end = Math.min(numTotalHits, hitsPerPage);
         while (true) {
             if (end > hits.length) {
-
                 System.out.println("Only results 1 - " + hits.length + " of " + numTotalHits + " total matching documents collected.");
                 System.out.println("Collect more (y/n) ?");
                 String line = in.readLine();
                 if (line.length() == 0 || line.charAt(0) == 'n') {
                     break;
-
                 }
-
                 hits = searcher.search(query, numTotalHits).scoreDocs;
-
             }
-
             end = Math.min(hits.length, start + hitsPerPage);
-
             for (int i = start; i < end; i++) {
                 if (raw) {                              // output raw format
                     System.out.println("doc=" + hits[i].doc + " score=" + hits[i].score);

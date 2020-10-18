@@ -3,7 +3,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
@@ -23,7 +22,6 @@ public class IndexFiles {
     public static void main(String[] args) {
         String indexPath = "index";
         String docsPath = "docs";
-        boolean create = true;
 
         if (docsPath == null) {
             System.err.println("docs Path is null!");
@@ -38,7 +36,6 @@ public class IndexFiles {
 
         try {
             System.out.println("Indexing Started !");
-
             Directory dir = FSDirectory.open(Paths.get(indexPath));
             Analyzer analyzer = new StandardAnalyzer();
             IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
