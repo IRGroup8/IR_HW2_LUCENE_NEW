@@ -22,31 +22,16 @@ public class SearchFiles {
     public static void main(String[] args) throws Exception {
         String index = "index";
         String field = "contents";
-        String queries = null;
-        boolean raw = true;
-        String queryString = null;
         int hitsPerPage = 10;
         IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(index)));
         IndexSearcher searcher = new IndexSearcher(reader);
         Analyzer analyzer = new StandardAnalyzer();
         BufferedReader in = null;
-        if (queries != null) {
-            in = Files.newBufferedReader(Paths.get(queries), StandardCharsets.UTF_8);
-
-        } else {
-            in = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
-
-        }
+        in = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
         QueryParser parser = new QueryParser(field, analyzer);
-
         while (true) {
-            if (queries == null && queryString == null) {
-                System.out.println("Enter query: ");
-
-            }
-
-            String line = queryString != null ? queryString : in.readLine();
-
+            System.out.println("Enter query: ");
+            String line = in.readLine();
             if (line == null || line.length() == -1) {
                 break;
             }
@@ -56,15 +41,12 @@ public class SearchFiles {
             }
             Query query = parser.parse(line);
             System.out.println("Searching for: " + query.toString(field));
-            doPagingSearch(in, searcher, query, hitsPerPage, raw, queries == null && queryString == null);
-            if (queryString != null) {
-                break;
-            }
+            doPagingSearch(in, searcher, query, hitsPerPage);
         }
         reader.close();
     }
     public static void doPagingSearch(BufferedReader in, IndexSearcher searcher, Query query,
-                                      int hitsPerPage, boolean raw, boolean interactive) throws IOException {
+                                      int hitsPerPage) throws IOException {
 
         TopDocs results = searcher.search(query, 20 * hitsPerPage);
         ScoreDoc[] hits = results.scoreDocs;
@@ -76,40 +58,18 @@ public class SearchFiles {
         int start = 0;
         int end = Math.min(numTotalHits, hitsPerPage);
         while (true) {
-            if (end > hits.length) {
-                System.out.println("Only results 1 - " + hits.length + " of " + numTotalHits + " total matching documents collected.");
-                System.out.println("Collect more (y/n) ?");
-                String line = in.readLine();
-                if (line.length() == 0 || line.charAt(0) == 'n') {
-                    break;
-                }
-                hits = searcher.search(query, numTotalHits).scoreDocs;
-            }
-            end = Math.min(hits.length, start + hitsPerPage);
             for (int i = start; i < end; i++) {
-                if (raw) {                              // output raw format
-                    System.out.println("doc=" + hits[i].doc + " score=" + hits[i].score);
-                    continue;
-                }
-
                 Document doc = searcher.doc(hits[i].doc);
                 String path = doc.get("path");
-                if (path != null) {
-                    System.out.println((i + 1) + ". " + path);
-                    String title = doc.get("title");
-                    if (title != null) {
-                        System.out.println("   Title: " + doc.get("title"));
-
-                    }
-
-                } else {
-                    System.out.println((i + 1) + ". " + "No path for this document");
-
+                if(path!=null) {
+                    System.out.println("PATH : " + path + " docID=" + hits[i].doc + " score=" + hits[i].score);
+                    continue;
                 }
-
+                else{
+                    System.out.println("NO PATH FOUND");
+                }
             }
-
-            if (!interactive || end == 0) {
+            if (end == 0) {
                 break;
 
             }
@@ -161,7 +121,6 @@ public class SearchFiles {
                 }
                 if (quit) break;
                 end = Math.min(numTotalHits, start + hitsPerPage);
-
             }
 
         }
